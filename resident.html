@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barangay Sumpot IMS - Resident Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="1.png">
+    <style>
+        .profile-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+        .profile-avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="animate-fade-in">
+
+    <nav class="navbar">
+        <div class="nav-brand">🏠 Resident Portal</div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div id="nav-avatar"></div>
+            <span id="user-display" style="font-weight: 500; font-size: 0.875rem; color: var(--text-muted);"></span>
+            <button class="btn btn-outline" style="width: auto;" onclick="logout()">Logout</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <header style="margin-bottom: 2rem; display: flex; align-items: center; gap: 1.5rem;">
+            <div id="header-avatar"></div>
+            <div>
+                <h1 id="welcome-msg">Welcome!</h1>
+                <p style="color: var(--text-muted);" id="user-purok"></p>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="section">
+                <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">📢 Announcements</h3>
+                <div id="ann-list"><p style="color: var(--text-muted); font-style: italic;">Loading announcements...</p></div>
+            </div>
+
+            <div class="section">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">Request Certificate</h3>
+                    <div class="input-group">
+                        <label>Select Certificate Type</label>
+                        <select id="cert-type">
+                            <option>Barangay Clearance</option>
+                            <option>Certificate of Indigency</option>
+                            <option>Certificate of Residency</option>
+                            <option>Barangay Certification</option>
+                            <option>Tree Planting</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="reqBtn" onclick="submitRequest()">Submit Request</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="card">
+                    <h3 style="margin-bottom: 1.5rem;">My Certificate Requests</h3>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="font-size: 0.95rem; color: var(--warning); text-transform: uppercase; margin-bottom: 1.25rem; letter-spacing: 0.5px; font-weight: 800;">⏳ Pending Approval</h4>
+                        <div id="pending-requests-list">
+                            <p style="color: var(--text-muted); font-size: 0.9rem; font-style: italic;">No pending requests.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="font-size: 0.95rem; color: var(--primary); text-transform: uppercase; margin-bottom: 1.25rem; letter-spacing: 0.5px; font-weight: 800;">📜 Request History</h4>
+                        <div id="history-requests-list">
+                            <p style="color: var(--text-muted); font-size: 0.9rem; font-style: italic;">No history yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">💬 Community Chat</h3>
+                <div class="card" style="height: 400px; display: flex; flex-direction: column; padding: 0;">
+                    <div id="chat-messages" style="flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; background: #f1f5f9;">
+                        <p style="text-align: center; color: var(--text-muted);">Loading chat...</p>
+                    </div>
+                    <!-- Image Preview Area -->
+                    <div id="chat-preview" style="display: none; padding: 0.5rem 1rem; background: #f8fafc; border-top: 1px solid var(--border); align-items: center; gap: 1rem;">
+                        <div style="position: relative;">
+                            <img id="preview-img" src="" style="height: 60px; border-radius: 0.5rem; border: 1px solid var(--border);">
+                            <button onclick="cancelImage()" style="position: absolute; -top: 5px; -right: 5px; background: var(--danger); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center;">✖</button>
+                        </div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Image selected</p>
+                    </div>
+                    <div style="padding: 0.75rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; background: var(--bg-card); border-bottom-left-radius: 1rem; border-bottom-right-radius: 1rem; align-items: center;">
+                        <button class="btn btn-outline btn-icon" onclick="document.getElementById('chat-img-input').click()" title="Select Image">📷</button>
+                        <input type="file" id="chat-img-input" accept="image/*" style="display: none;" onchange="previewChatImage(event)">
+                        <input id="chat-input" type="text" placeholder="Type a message..." style="flex: 1;" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                        <button class="btn btn-primary" onclick="sendChatMessage()" style="width: auto; padding: 0 1rem;">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer style="text-align: center; margin-top: 3rem; color: var(--text-muted); font-size: 0.85rem; padding: 2rem 0;">
+            Developed by Cyberxel
+        </footer>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="api.js"></script>
+    <script>
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js');
+            });
+        }
+
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+        if (!currentUser || localStorage.getItem("role") !== "resident") location.href = "index.html";
+
+        document.getElementById('user-display').innerText = currentUser.name;
+        document.getElementById('welcome-msg').innerText = `Welcome, ${currentUser.name.split(' ')[0]}!`;
+        document.getElementById('user-purok').innerText = `📍 ${currentUser.purok || 'N/A'} · Manage your requests and stay updated with barangay announcements.`;
+
+        // Render avatars
+        async function renderAvatars() {
+            const users = await apiGet("users");
+            const userData = users.find(u => u.username === currentUser.username);
+            const photo = userData && userData.photo ? userData.photo : null;
+            const initial = currentUser.name.charAt(0).toUpperCase();
+
+            const navAvatar = document.getElementById('nav-avatar');
+            const headerAvatar = document.getElementById('header-avatar');
+
+            if (photo) {
+                navAvatar.innerHTML = `<img src="${photo}" class="profile-avatar" alt="Profile">`;
+                headerAvatar.innerHTML = `<img src="${photo}" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:4px solid var(--primary);box-shadow:0 4px 15px rgba(79,70,229,0.3);" alt="Profile">`;
+            } else {
+                navAvatar.innerHTML = `<div class="profile-avatar-placeholder" style="width:40px;height:40px;font-size:1rem;">${initial}</div>`;
+                headerAvatar.innerHTML = `<div class="profile-avatar-placeholder" style="width:120px;height:120px;font-size:2.5rem;">${initial}</div>`;
+            }
+        }
+
+        let lastAnnCount = -1;
+        function startAnnouncementsListener() {
+            apiListen("ann", (anns) => {
+                if (lastAnnCount !== -1 && anns.length > lastAnnCount) {
+                    const newAnn = anns[0]; // Newest at index 0
+                    showNotification("New Barangay Announcement", newAnn.text);
+                }
+                lastAnnCount = anns.length;
+
+                const list = document.getElementById('ann-list');
+                if (anns.length === 0) {
+                    list.innerHTML = '<p style="color: var(--text-muted); font-style: italic;">No announcements yet.</p>';
+                    return;
+                }
+                list.innerHTML = anns.map(a => `
+                    <div class="card" style="margin-bottom: 1rem; padding: 1.25rem;">
+                        <p style="font-weight: 500; margin-bottom: 0.5rem;">${a.text}</p>
+                        <small style="color: var(--text-muted)">📅 ${a.date}</small>
+                    </div>
+                `).join("");
+            });
+        }
+
+        async function submitRequest() {
+            const type = document.getElementById('cert-type').value;
+            const reqBtn = document.getElementById('reqBtn');
+            reqBtn.disabled = true;
+
+            const reqs = await apiGet("req");
+            reqs.unshift({
+                username: currentUser.username,
+                name: currentUser.name,
+                purok: currentUser.purok,
+                type: type,
+                date: new Date().toLocaleString(),
+                status: "Pending"
+            });
+
+            await apiPost("req", reqs);
+            alert("Request submitted successfully!");
+            reqBtn.disabled = false;
+        }
+
+        let _prevStatuses = {};
+        function startRequestsListener() {
+            apiListen("req", (reqs) => {
+                const myData = reqs.filter(r => r.username === currentUser.username);
+                
+                myData.forEach(r => {
+                    const reqId = r.date + r.type;
+                    if (_prevStatuses[reqId] && _prevStatuses[reqId] === 'Pending' && r.status !== 'Pending') {
+                        showNotification(`Request ${r.status}!`, `Your request for ${r.type} has been ${r.status.toLowerCase()}.`);
+                    }
+                    _prevStatuses[reqId] = r.status;
+                });
+
+                const pendingList = document.getElementById('pending-requests-list');
+                const historyList = document.getElementById('history-requests-list');
+
+                const pendingItems = myData.filter(r => r.status === 'Pending');
+                const historyItems = myData.filter(r => r.status !== 'Pending');
+
+                const renderItem = (r) => `
+                    <div style="padding: 1.25rem; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: white; margin-bottom: 0.75rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="flex: 1;">
+                            <p style="font-weight: 800; font-size: 1.1rem; margin-bottom: 0.25rem; color: var(--text-main);">${r.type}</p>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.5rem;">
+                                ${r.status === 'Pending' ? `Your ${r.type} request is pending.` : `Your ${r.type} request has been ${r.status.toLowerCase()}.`}
+                            </p>
+                            <small style="color: var(--text-muted); font-weight: 500; font-size: 0.8rem;">📅 Requested on: ${r.date}</small>
+                        </div>
+                        <span class="badge badge-${r.status.toLowerCase()}" style="margin-left: 1rem;">${r.status}</span>
+                    </div>
+                `;
+
+                pendingList.innerHTML = pendingItems.length ? pendingItems.map(renderItem).join("") : '<p style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No pending requests.</p>';
+                historyList.innerHTML = historyItems.length ? historyItems.map(renderItem).join("") : '<p style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">No history yet.</p>';
+            });
+        }
+
+        // --- CHAT LOGIC ---
+        let lastChatCount = -1;
+        function startChatListener() {
+            if (Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+
+            apiListen("chat", (messages) => {
+                if (lastChatCount !== -1 && messages.length > lastChatCount) {
+                    const lastMsg = messages[messages.length - 1];
+                    if (lastMsg.sender !== currentUser.name) {
+                        const title = lastMsg.role === 'admin' ? "Message from Admin" : `Message from ${lastMsg.sender}`;
+                        showNotification(title, lastMsg.text);
+                    }
+                }
+                lastChatCount = messages.length;
+
+                const chatMessages = document.getElementById('chat-messages');
+                chatMessages.innerHTML = messages.map((m, i) => {
+                    const isMe = m.sender === currentUser.name;
+                    const isAdmin = m.role === 'admin';
+                    return `
+                        <div style="align-self: ${isMe ? 'flex-end' : 'flex-start'}; max-width: 85%;">
+                            <div style="background: ${isMe ? 'var(--primary)' : (isAdmin ? '#e0e7ff' : 'white')}; color: ${isMe ? 'white' : 'var(--text-main)'}; padding: 0.8rem 1rem; border-radius: 1rem; box-shadow: var(--shadow); ${isMe ? 'border-bottom-right-radius: 0;' : 'border-bottom-left-radius: 0;'}">
+                                ${m.image ? `<img src="${m.image}" style="max-width: 100%; border-radius: 0.5rem; display: block; margin-bottom: 0.5rem; cursor: pointer;" onclick="window.open(this.src)">` : ''}
+                                ${m.text ? `<p style="font-size: 1.1rem; font-weight: 700; line-height: 1.4;">${m.text}</p>` : ''}
+                            </div>
+                            <div style="display: flex; justify-content: ${isMe ? 'flex-end' : 'flex-start'}; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                                <small style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">
+                                    <strong>${isAdmin ? '🏛️ ' : ''}${m.sender}</strong> · ${m.date}
+                                </small>
+                                ${isMe ? `<button onclick="deleteChatMessage(${i})" style="background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.85rem; padding: 0 0.2rem;" title="Delete my message">🗑️</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+        }
+
+        async function deleteChatMessage(i) {
+            if (!confirm("Delete your message?")) return;
+            const messages = await apiGet("chat");
+            messages.splice(i, 1);
+            await apiPost("chat", messages);
+            lastChatCount = messages.length;
+        }
+
+        let selectedImageBase64 = "";
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text && !selectedImageBase64) return;
+
+            const messages = await apiGet("chat");
+            messages.push({
+                sender: currentUser.name,
+                role: "resident",
+                text: text,
+                image: selectedImageBase64,
+                date: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+            
+            await apiPost("chat", messages);
+            lastChatCount = messages.length;
+            input.value = "";
+            cancelImage();
+        }
+
+        function previewChatImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                selectedImageBase64 = e.target.result;
+                document.getElementById('preview-img').src = selectedImageBase64;
+                document.getElementById('chat-preview').style.display = 'flex';
+                event.target.value = ""; 
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function cancelImage() {
+            selectedImageBase64 = "";
+            document.getElementById('chat-preview').style.display = 'none';
+        }
+
+        function logout() { localStorage.removeItem("currentUser"); localStorage.removeItem("role"); location.href = "index.html"; }
+
+        renderAvatars();
+        startAnnouncementsListener();
+        startRequestsListener();
+        startChatListener();
+    </script>
+</body>
+</html>
